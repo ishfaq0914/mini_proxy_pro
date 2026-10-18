@@ -34,6 +34,8 @@ Make sure you have **Python 3.x** installed on your system. No external pip pack
 
 ## Run the proxy script:
 git pull
+ls 
+mv mini_proxy_py  mini_proxy_py
 python mini_proxy.py
 
 
