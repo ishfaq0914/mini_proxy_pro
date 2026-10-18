@@ -32,15 +32,13 @@ Make sure you have **Python 3.x** installed on your system. No external pip pack
    git clone https://github.com/ishfaq0914/mini_proxy_pro.git
    cd mini_proxy_pro
 
-Run the proxy script:
+## run proxy
+2.  ***run repo:**
+mv mini_proxy_py mini_proxy.py
 git pull
-ls 
-mv mini_proxy_py  mini_proxy_py
 python mini_proxy.py
 
 
 ## Configure your browser/client:
-Set your system or browser proxy settings to point to 127.0.0.1 on port 8080.
 
-## Disclaimer
-This tool is created strictly for educational purposes, local debugging, and authorized security assessments. Do not use it on networks or systems without explicit permission.
+Set your system or browser proxy settings to point to 127.0.0.1 on port 8080.
