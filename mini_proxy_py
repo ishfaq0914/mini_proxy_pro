@@ -1,0 +1,130 @@
+import select
+import socket
+import sys
+import threading
+
+# ANSI Colors
+CYAN = "\033[96m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+RESET = "\033[0m"
+
+LOCAL_HOST = "127.0.0.1"
+LOCAL_PORT = 8080
+BUFFER_SIZE = 8192
+
+
+def handle_client(client_socket):
+  try:
+    request = client_socket.recv(BUFFER_SIZE)
+    if not request:
+      client_socket.close()
+      return
+
+    first_line = request.split(b"\n")[0].decode("utf-8", errors="ignore")
+    print(f"{GREEN}[INTERCEPTED] -> {CYAN}{first_line}{RESET}")
+
+    # Check if it's a HTTPS CONNECT request
+    if first_line.startswith("CONNECT"):
+      # Format: CONNECT target:port HTTP/1.1
+      parts = first_line.split(" ")
+      if len(parts) >= 2:
+        host_port = parts[1]
+        if ":" in host_port:
+          target_host, target_port = host_port.split(":")
+          target_port = int(target_port)
+        else:
+          target_host = host_port
+          target_port = 443
+
+        # Connect to the remote server
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.connect((target_host, target_port))
+
+        # Send 200 Connection Established to browser so tunnel opens
+        client_socket.sendall(
+            b"HTTP/1.1 200 Connection Established\r\n\r\n"
+        )
+
+        # Start tunneling data back and forth between browser and server
+        sockets = [client_socket, server_socket]
+        while True:
+          readable, _, _ = select.select(sockets, [], [])
+          if client_socket in readable:
+            data = client_socket.recv(BUFFER_SIZE)
+            if not data:
+              break
+            server_socket.sendall(data)
+          if server_socket in readable:
+            data = server_socket.recv(BUFFER_SIZE)
+            if not data:
+              break
+            client_socket.sendall(data)
+
+        server_socket.close()
+        client_socket.close()
+    else:
+      # Normal HTTP Request handling
+      lines = request.split(b"\r\n")
+      host_line = [l for l in lines if l.lower().startswith(b"host:")]
+
+      if host_line:
+        host_header = host_line[0].split(b" ")[1].decode("utf-8")
+        if ":" in host_header:
+          target_host, target_port = host_header.split(":")
+          target_port = int(target_port)
+        else:
+          target_host = host_header
+          target_port = 80
+
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.connect((target_host, target_port))
+        server_socket.sendall(request)
+
+        while True:
+          response = server_socket.recv(BUFFER_SIZE)
+          if len(response) > 0:
+            client_socket.sendall(response)
+          else:
+            break
+        server_socket.close()
+
+      client_socket.close()
+  except Exception as e:
+    print(f"{RED}[-] Proxy Error: {e}{RESET}")
+    client_socket.close()
+
+
+def run_proxy():
+  print(f"""
+{CYAN}====================================================
+     PRO MINI INTERCEPTING PROXY (HTTP + HTTPS)     
+===================================================={RESET}
+""")
+  server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+  try:
+    server.bind((LOCAL_HOST, LOCAL_PORT))
+    server.listen(100)
+    print(
+        f"{GREEN}[+] Proxy running on {LOCAL_HOST}:{LOCAL_PORT} ...{RESET}"
+    )
+    print(f"{YELLOW}[*] Now HTTPS CONNECT requests will pass through!{RESET}\n")
+
+    while True:
+      client_socket, addr = server.accept()
+      client_thread = threading.Thread(
+          target=handle_client, args=(client_socket,)
+      )
+      client_thread.start()
+
+  except KeyboardInterrupt:
+    print(f"\n{CYAN}[+] Stopping Proxy. Bye, bhai!{RESET}")
+    server.close()
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+  run_proxy()
