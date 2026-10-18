@@ -33,7 +33,7 @@ Make sure you have **Python 3.x** installed on your system. No external pip pack
    cd mini_proxy_pro
 
 ## run proxy
-2.  ***run repo:**
+```bash
 mv mini_proxy_py mini_proxy.py
 git pull
 python mini_proxy.py
