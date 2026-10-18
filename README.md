@@ -30,7 +30,7 @@ Make sure you have **Python 3.x** installed on your system. No external pip pack
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/ishfaq0914/mini_proxy_pro.git](https://github.com/ishfaq0914/mini_proxy_pro.git)
+   git clone https://github.com/ishfaq0914/mini_proxy_pro.git
    cd mini_proxy_pro
 
    
