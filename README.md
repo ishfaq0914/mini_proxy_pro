@@ -37,8 +37,8 @@ Make sure you have **Python 3.x** installed on your system. No external pip pack
 mv mini_proxy_py mini_proxy.py
 git pull
 python mini_proxy.py
+'''
 
-
-## Configure your browser/client:
+# Configure your browser/client:
 
 Set your system or browser proxy settings to point to 127.0.0.1 on port 8080.
